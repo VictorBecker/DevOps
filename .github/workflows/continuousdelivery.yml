@@ -1,0 +1,18 @@
+name: continuousdelivery.yml
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      with:
+        sparse-checkout: .
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: my-artifact
+          path: path/to/artifact/
