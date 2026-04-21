@@ -8,3 +8,8 @@ jobs:
       - uses: dbelyaev/action-checkstyle@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: my-artifact
+          path: path/to/artifact/ # or path/to/artifact
