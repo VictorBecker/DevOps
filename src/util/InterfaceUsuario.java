@@ -1,73 +1,104 @@
 package util;
 
-import java.util.Locale;
+import modelo.Terreno.TipoZona;
 import java.util.Scanner;
 
 public class InterfaceUsuario {
 
-    private Scanner scanner;
+    private static final Scanner scanner = new Scanner(System.in);
 
-    public InterfaceUsuario() {
-        this.scanner = new Scanner(System.in).useLocale(Locale.US);
-    }
+    // Limites de validação
+    private static final double VALOR_IMOVEL_MIN = 1_000.0;
+    private static final double VALOR_IMOVEL_MAX = 100_000_000.0;
+    private static final int    PRAZO_MIN         = 1;
+    private static final int    PRAZO_MAX         = 35;
+    private static final double TAXA_MIN          = 0.001;
+    private static final double TAXA_MAX          = 1.0;
 
-    // Pede ao usuário o valor do imóvel (somente valores positivos)
-    public double pedirValorImovel() {
-        double valor;
-        do {
-            System.out.print("Digite o valor do imóvel (R$): ");
-            if (scanner.hasNextDouble()) {
-                valor = scanner.nextDouble();
-                if (valor <= 0) {
-                    System.out.println("Erro: o valor do imóvel deve ser positivo. Tente novamente.");
-                }
-            } else {
+    //  Métodos auxiliares privados
+
+    private static double lerDoubleNoIntervalo(String mensagem, double min, double max) {
+        while (true) {
+            System.out.print(mensagem);
+            String entrada = scanner.nextLine().trim().replace(",", ".");
+            try {
+                double valor = Double.parseDouble(entrada);
+                if (valor >= min && valor <= max) return valor;
+                System.out.printf("Erro: o valor deve estar entre %.2f e %.2f. Tente novamente.%n", min, max);
+            } catch (NumberFormatException e) {
                 System.out.println("Erro: entrada inválida. Digite um número válido.");
-                scanner.next(); // descarta entrada inválida
-                valor = -1;    // força repetição do loop
             }
-        } while (valor <= 0);
-
-        return valor;
+        }
     }
 
-    // Pede ao usuário o prazo do financiamento em anos (somente valores positivos)
-    public int pedirPrazoFinanciamento() {
-        int prazo;
-        do {
-            System.out.print("Digite o prazo do financiamento (em anos): ");
-            if (scanner.hasNextInt()) {
-                prazo = scanner.nextInt();
-                if (prazo <= 0) {
-                    System.out.println("Erro: o prazo deve ser um número inteiro positivo. Tente novamente.");
-                }
-            } else {
+    private static int lerInteiroNoIntervalo(String mensagem, int min, int max) {
+        while (true) {
+            System.out.print(mensagem);
+            String entrada = scanner.nextLine().trim();
+            try {
+                int valor = Integer.parseInt(entrada);
+                if (valor >= min && valor <= max) return valor;
+                System.out.printf("Erro: o valor deve estar entre %d e %d. Tente novamente.%n", min, max);
+            } catch (NumberFormatException e) {
                 System.out.println("Erro: entrada inválida. Digite um número inteiro válido.");
-                scanner.next(); // descarta entrada inválida
-                prazo = -1;    // força repetição do loop
             }
-        } while (prazo <= 0);
-
-        return prazo;
+        }
     }
 
-    // Pede ao usuário a taxa de juros anual (somente valores positivos)
-    public double pedirTaxaJuros() {
-        double taxa;
-        do {
-            System.out.print("Digite a taxa de juros anual (ex: 0.12 para 12%): ");
-            if (scanner.hasNextDouble()) {
-                taxa = scanner.nextDouble();
-                if (taxa <= 0) {
-                    System.out.println("Erro: a taxa de juros deve ser positiva. Tente novamente.");
-                }
-            } else {
-                System.out.println("Erro: entrada inválida. Digite um número válido.");
-                scanner.next(); // descarta entrada inválida
-                taxa = -1;     // força repetição do loop
-            }
-        } while (taxa <= 0);
+    //  Dados comuns do financiamento
 
-        return taxa;
+    public double pedirValorImovel() {
+        System.out.printf("(Valor entre R$ %,.2f e R$ %,.2f)%n", VALOR_IMOVEL_MIN, VALOR_IMOVEL_MAX);
+        return lerDoubleNoIntervalo("Digite o valor do imóvel (R$): ", VALOR_IMOVEL_MIN, VALOR_IMOVEL_MAX);
+    }
+
+    public int pedirPrazoFinanciamento() {
+        System.out.printf("(Prazo entre %d e %d anos)%n", PRAZO_MIN, PRAZO_MAX);
+        return lerInteiroNoIntervalo("Digite o prazo do financiamento (em anos): ", PRAZO_MIN, PRAZO_MAX);
+    }
+
+    public double pedirTaxaJuros() {
+        System.out.printf("(Taxa entre %.1f%% e %.0f%% ao ano)%n", TAXA_MIN * 100, TAXA_MAX * 100);
+        return lerDoubleNoIntervalo("Digite a taxa de juros anual (ex: 0.12 para 12%): ", TAXA_MIN, TAXA_MAX);
+    }
+
+    //  Atributos específicos: Casa
+
+    public double pedirAreaTerreno() {
+        return lerDoubleNoIntervalo("Digite a área do terreno (m²): ", 10.0, 100_000.0);
+    }
+
+    public double pedirAreaConstruida() {
+        return lerDoubleNoIntervalo("Digite a área construída (m²): ", 10.0, 100_000.0);
+    }
+
+    //  Atributos específicos: Apartamento
+
+    public int pedirVagasGaragem() {
+        return lerInteiroNoIntervalo("Digite o número de vagas de garagem: ", 0, 10);
+    }
+
+    public int pedirAndar() {
+        return lerInteiroNoIntervalo("Digite o número do andar: ", 1, 200);
+    }
+
+    //  Atributos específicos: Terreno
+
+    public TipoZona pedirTipoZona() {
+        TipoZona[] opcoes = TipoZona.values();
+        while (true) {
+            System.out.println("Tipos de zona disponíveis:");
+            for (int i = 0; i < opcoes.length; i++) {
+                System.out.printf("  %c - %s%n", 'a' + i, opcoes[i]);
+            }
+            // Lógica usada para facilitar novas opcoes futuras
+            System.out.print("Escolha o tipo de zona (letra): ");
+            String entrada = scanner.nextLine().trim().toLowerCase();
+            if (entrada.length() == 1) {
+                int indice = entrada.charAt(0) - 'a';
+                if (indice >= 0 && indice < opcoes.length) return opcoes[indice];
+            }
+            System.out.println("Erro: entrada inválida. Digite uma letra válida da lista.");
+        }
     }
 }
